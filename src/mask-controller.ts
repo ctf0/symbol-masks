@@ -1,3 +1,7 @@
+/**
+ * copy write of Steven O'Riley @ https://github.com/stevengeeky
+ */
+
 import * as vscode from "vscode";
 
 /**
@@ -225,6 +229,7 @@ export default class MaskController {
                 if (!decorationOptions.has(decorationKey)) {
                     decorationOptions.set(decorationKey, []);
                 }
+
                 decorationOptions.get(decorationKey)?.push({
                     range: new vscode.Range(startPos, endPos),
                     hoverMessage: hover
@@ -242,18 +247,6 @@ export default class MaskController {
         const decorationType = this.decorationTypeMap.get(pattern.source);
         if (decorationType) {
             this.editor.setDecorations(decorationType, decorationOptions.get(pattern.source) || []);
-        }
-
-        // Clear all masks which were not matched but which are
-        // still cached
-        for (const key of this.decorationTypeMap.keys()) {
-            if (key !== pattern.source && !(matchReplaceKeys.has(key))) {
-                const decorationType = this.decorationTypeMap.get(key);
-                if (decorationType) {
-                    this.editor.setDecorations(decorationType, []);
-                }
-                this.decorationTypeMap.delete(key);
-            }
         }
     }
 }

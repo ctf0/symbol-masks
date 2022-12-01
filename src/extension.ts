@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import MaskController from "./mask-controller";
 
-const configName: string = 'symbolMasks'
+const PACKAGE_NAME: string = 'symbolMasks'
 let userMasks: any
 let MaskControllers: any = []
 
@@ -12,9 +12,9 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function setConfig() {
-    const configuration = vscode.workspace.getConfiguration();
+    const config = vscode.workspace.getConfiguration(PACKAGE_NAME);
 
-    userMasks = configuration.get(`${configName}.masks`);
+    userMasks = config.masks;
 }
 
 function init() {
@@ -97,7 +97,7 @@ function events(context: vscode.ExtensionContext) {
     }, null, context.subscriptions);
 
     vscode.workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration(configName)) {
+        if (event.affectsConfiguration(PACKAGE_NAME)) {
             MaskControllers.map((controller: MaskController) => controller.clear());
             setConfig()
             init();
