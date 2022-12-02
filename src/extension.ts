@@ -3,6 +3,7 @@ import MaskController from "./mask-controller";
 
 const PACKAGE_NAME: string = 'symbolMasks'
 let userMasks: any = []
+let extraMasks: any = []
 let MaskControllers: any = []
 
 interface MaskConfigObject { // define the object (singular)
@@ -18,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
     return {
         addAdditionalMasks(masks: MaskConfigObject[]) {
             if (masks.length) {
-                userMasks = userMasks.concat(masks)
+                extraMasks = masks
                 init()
             }
         },
@@ -55,7 +56,7 @@ function maskEditor(editor: vscode.TextEditor | undefined) {
             const document = maskController.getEditor()?.document;
 
             if (document) {
-                for (let mask of userMasks) {
+                for (let mask of userMasks.concat(extraMasks)) {
                     if (vscode.languages.match(mask.language, document) > 0) {
                         maskMap.set(mask.language, mask.pattern);
 
@@ -101,7 +102,7 @@ function maskEditor(editor: vscode.TextEditor | undefined) {
 }
 
 function events(context: vscode.ExtensionContext) {
-    vscode.window.onDidChangeVisibleTextEditors((editor) => {
+    vscode.window.onDidChangeVisibleTextEditors((editors) => {
         init()
     }, null, context.subscriptions);
 
