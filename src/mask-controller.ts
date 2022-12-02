@@ -1,7 +1,3 @@
-/**
- * copy write of Steven O'Riley @ https://github.com/stevengeeky
- */
-
 import * as vscode from "vscode";
 
 /**

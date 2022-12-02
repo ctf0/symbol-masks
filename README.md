@@ -9,6 +9,7 @@ based on https://github.com/stevengeeky/symbol-masks + fixes/enhancements
 - remove incorrect pkg default config
 - remove screenshots folder & make the ext size smaller
 - reset background default
+- API for other extensions to consume
 
 ## Usage
 
@@ -55,4 +56,23 @@ For efficiency, you can also match many symbols at once and map each of them to 
     ]
   }
 ]
+```
+
+## API
+
+[Read More](https://code.visualstudio.com/api/references/vscode-api#extensions)
+
+```js
+const maskExtension = vscode.extensions.getExtension("ctf0.symbol-masks-new");
+
+if (maskExtension == null) {
+    throw new Error("Depends on 'ctf0.symbol-masks-new' extension");
+}
+
+const MASK_EXTENSION_PROVIDER = await maskExtension.activate();
+
+// now u can use it like so
+
+MASK_EXTENSION_PROVIDER.addAdditionalMasks(maskPatternsArray)
+MASK_EXTENSION_PROVIDER.clearMaskDecorations()
 ```

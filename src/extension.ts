@@ -2,13 +2,30 @@ import * as vscode from "vscode";
 import MaskController from "./mask-controller";
 
 const PACKAGE_NAME: string = 'symbolMasks'
-let userMasks: any
+let userMasks: any = []
 let MaskControllers: any = []
+
+interface MaskConfigObject { // define the object (singular)
+    language: string;
+    patterns: Array<object>;
+}
 
 export function activate(context: vscode.ExtensionContext) {
     setConfig();
-    init();
+    init()
     events(context);
+
+    return {
+        addAdditionalMasks(masks: MaskConfigObject[]) {
+            if (masks.length) {
+                userMasks = userMasks.concat(masks)
+                init()
+            }
+        },
+        clearMaskDecorations() {
+            clearMasks()
+        }
+    }
 }
 
 function setConfig() {
@@ -84,8 +101,8 @@ function maskEditor(editor: vscode.TextEditor | undefined) {
 }
 
 function events(context: vscode.ExtensionContext) {
-    vscode.window.onDidChangeActiveTextEditor((editor) => {
-        maskCurrentEditor()
+    vscode.window.onDidChangeVisibleTextEditors((editor) => {
+        init()
     }, null, context.subscriptions);
 
     vscode.workspace.onDidSaveTextDocument((document) => {
@@ -98,11 +115,15 @@ function events(context: vscode.ExtensionContext) {
 
     vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration(PACKAGE_NAME)) {
-            MaskControllers.map((controller: MaskController) => controller.clear());
+            clearMasks()
             setConfig()
-            init();
+            init()
         }
     }, null, context.subscriptions);
+}
+
+function clearMasks() {
+    MaskControllers.map((controller: MaskController) => controller.clear());
 }
 
 export function deactivate() {}
