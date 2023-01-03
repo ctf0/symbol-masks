@@ -12,3 +12,7 @@
 
 - small fixes
 - provide an API to other extensions (config must be similar to the extension own config)
+
+## 0.0.6
+
+- fix not expanding mask unless same masks char exists more than once in the same document

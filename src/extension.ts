@@ -1,10 +1,11 @@
-import * as vscode from "vscode";
-import MaskController from "./mask-controller";
+import debounce from 'lodash.debounce';
+import * as vscode from 'vscode';
+import MaskController from './mask-controller';
 
-const PACKAGE_NAME: string = 'symbolMasks'
-let userMasks: any = []
-let extraMasks: any = []
-let MaskControllers: any = []
+const PACKAGE_NAME = 'symbolMasks';
+let userMasks: any = [];
+let extraMasks: any = [];
+const MaskControllers: any = [];
 
 interface MaskConfigObject { // define the object (singular)
     language: string;
@@ -13,20 +14,32 @@ interface MaskConfigObject { // define the object (singular)
 
 export function activate(context: vscode.ExtensionContext) {
     setConfig();
-    init()
-    events(context);
+    init();
+
+    context.subscriptions.push(
+        vscode.window.onDidChangeVisibleTextEditors((editors) => init()),
+        vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => maskEditor(vscode.window.activeTextEditor)),
+        vscode.window.onDidChangeTextEditorSelection(debounce((event: vscode.TextEditorSelectionChangeEvent) => maskEditor(event.textEditor), 100)),
+        vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
+            if (event.affectsConfiguration(PACKAGE_NAME)) {
+                clearMasks();
+                setConfig();
+                init();
+            }
+        }),
+    );
 
     return {
         addAdditionalMasks(masks: MaskConfigObject[]) {
             if (masks.length) {
-                extraMasks = masks
-                init()
+                extraMasks = masks;
+                init();
             }
         },
         clearMaskDecorations() {
-            clearMasks()
-        }
-    }
+            clearMasks();
+        },
+    };
 }
 
 function setConfig() {
@@ -39,92 +52,48 @@ function init() {
     vscode.window.visibleTextEditors.map((editor) => maskEditor(editor));
 }
 
-function maskCurrentEditor() {
-    maskEditor(vscode.window.activeTextEditor);
-}
-
 function maskEditor(editor: vscode.TextEditor | undefined) {
-    let old = MaskControllers.find((item: MaskController) => item.getEditor() === editor)
+    if (editor) {
+        const old: MaskController | undefined = MaskControllers.find((item: MaskController) => item.getEditor() === editor);
 
-    // A map from language id => mask
-    const maskMap = new Map<string, any>();
-    const maskController = old || new MaskController(editor);
-    let timeout: NodeJS.Timeout;
+        // A map from language id => mask
+        const maskController = old || new MaskController(editor);
 
-    async function updateMasks () {
         try {
-            const document = maskController.getEditor()?.document;
+            const { document } = editor;
 
-            if (document) {
-                for (let mask of userMasks.concat(extraMasks)) {
-                    if (vscode.languages.match(mask.language, document) > 0) {
-                        maskMap.set(mask.language, mask.pattern);
+            for (const mask of userMasks.concat(extraMasks)) {
+                if (vscode.languages.match(mask.language, document) > 0) {
+                    for (const item of mask.patterns) {
+                        const regex = new RegExp(item.pattern, item.ignoreCase ? 'ig' : 'g');
 
-                        for (const pattern of mask.patterns) {
-                            const regex = new RegExp(pattern.pattern, pattern.ignoreCase ? "ig" : "g");
-
-                            maskController.apply(regex, {
-                                text: pattern.replace,
-                                hover: pattern.hover,
-                                backgroundColor: pattern.style?.backgroundColor,
-                                border: pattern.style?.border,
-                                borderColor: pattern.style?.borderColor,
-                                color: pattern.style?.color,
-                                fontStyle: pattern.style?.fontStyle,
-                                fontWeight: pattern.style?.fontWeight,
-                                css: pattern.style?.css
-                            });
-                        }
+                        maskController.apply(regex, {
+                            text            : item.replace,
+                            hover           : item.hover,
+                            backgroundColor : item.style?.backgroundColor,
+                            border          : item.style?.border,
+                            borderColor     : item.style?.borderColor,
+                            color           : item.style?.color,
+                            fontStyle       : item.style?.fontStyle,
+                            fontWeight      : item.style?.fontWeight,
+                            css             : item.style?.css,
+                        });
                     }
                 }
             }
+
+            if (!old) {
+                MaskControllers.push(maskController);
+            }
+
         } catch (err) {
-            console.error(err);
+            // console.error(err);
         }
-    };
-
-    /**
-     * Wait a little before updating the masks
-     * To avoid slowing the extension down
-     */
-    function debounceUpdateMasks () {
-        if (timeout) {
-            clearTimeout(timeout);
-        }
-        timeout = setTimeout(updateMasks, 50);
-    };
-
-    debounceUpdateMasks();
-
-    if (!old) {
-        MaskControllers.push(maskController)
     }
-}
-
-function events(context: vscode.ExtensionContext) {
-    vscode.window.onDidChangeVisibleTextEditors((editors) => {
-        init()
-    }, null, context.subscriptions);
-
-    vscode.workspace.onDidSaveTextDocument((document) => {
-        maskCurrentEditor()
-    }, null, context.subscriptions);
-
-    vscode.window.onDidChangeTextEditorSelection((event) => {
-        maskCurrentEditor()
-    }, null, context.subscriptions);
-
-    vscode.workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration(PACKAGE_NAME)) {
-            clearMasks()
-            setConfig()
-            init()
-        }
-    }, null, context.subscriptions);
 }
 
 function clearMasks() {
     MaskControllers.map((controller: MaskController) => controller.clear());
 }
 
-export function deactivate() {}
+export function deactivate() { }
