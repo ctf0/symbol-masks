@@ -251,7 +251,7 @@ export default class MaskController {
             const decorationType = this.decorationTypeMap.get(decorationKey);
 
             if (decorationType) {
-                return editor.setDecorations(decorationType, decorationOptions.get(decorationKey) || []);
+                editor.setDecorations(decorationType, decorationOptions.get(decorationKey) || []);
             }
         }
 

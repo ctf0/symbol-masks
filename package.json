@@ -4,7 +4,7 @@
     "publisher": "ctf0",
     "description": "Mask symbols in your document with prettier text",
     "repository": "https://github.com/ctf0/symbol-masks",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "engines": {
         "vscode": "^1.68.0"
     },
