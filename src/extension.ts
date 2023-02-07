@@ -19,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.window.onDidChangeVisibleTextEditors((editors) => init()),
         vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => maskEditor(vscode.window.activeTextEditor)),
-        vscode.window.onDidChangeTextEditorSelection(debounce((event: vscode.TextEditorSelectionChangeEvent) => maskEditor(event.textEditor), 100)),
+        vscode.window.onDidChangeTextEditorSelection((event: vscode.TextEditorSelectionChangeEvent) => maskEditor(event.textEditor)),
         vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
             if (event.affectsConfiguration(PACKAGE_NAME)) {
                 clearMasks();
@@ -52,7 +52,7 @@ function init() {
     vscode.window.visibleTextEditors.map((editor) => maskEditor(editor));
 }
 
-function maskEditor(editor: vscode.TextEditor | undefined) {
+const maskEditor = debounce((editor: vscode.TextEditor | undefined) => {
     if (editor) {
         const old: MaskController | undefined = MaskControllers.find((item: MaskController) => item.getEditor() === editor);
 
@@ -68,15 +68,15 @@ function maskEditor(editor: vscode.TextEditor | undefined) {
                         const regex = new RegExp(item.pattern, item.ignoreCase ? 'ig' : 'g');
 
                         maskController.apply(regex, {
-                            text            : item.replace,
-                            hover           : item.hover,
-                            backgroundColor : item.style?.backgroundColor,
-                            border          : item.style?.border,
-                            borderColor     : item.style?.borderColor,
-                            color           : item.style?.color,
-                            fontStyle       : item.style?.fontStyle,
-                            fontWeight      : item.style?.fontWeight,
-                            css             : item.style?.css,
+                            text: item.replace,
+                            hover: item.hover,
+                            backgroundColor: item.style?.backgroundColor,
+                            border: item.style?.border,
+                            borderColor: item.style?.borderColor,
+                            color: item.style?.color,
+                            fontStyle: item.style?.fontStyle,
+                            fontWeight: item.style?.fontWeight,
+                            css: item.style?.css,
                         });
                     }
                 }
@@ -90,7 +90,7 @@ function maskEditor(editor: vscode.TextEditor | undefined) {
             // console.error(err);
         }
     }
-}
+}, 50)
 
 function clearMasks() {
     MaskControllers.map((controller: MaskController) => controller.clear());
