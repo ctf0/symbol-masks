@@ -16,3 +16,7 @@
 ## 0.0.6
 
 - fix not expanding mask unless same masks char exists more than once in the same document
+
+## 0.0.9
+
+- fix not applying multiple patterns for the same language

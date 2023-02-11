@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-const DECOR_KEY_PREFIX = '@@@'
+const DECOR_KEY_SUFFIX = '@@@';
 
 /**
  * An alternative to passing in a string
@@ -112,22 +112,22 @@ export default class MaskController {
                 id,
                 vscode.window.createTextEditorDecorationType({
                     // Hide the actual character
-                    textDecoration: mask.text ? 'none; font-size: 0' : 'none',
-                    backgroundColor: mask.backgroundColor,
-                    border: mask.border,
-                    borderColor: mask.borderColor,
-                    color: mask.color,
-                    fontStyle: mask.fontStyle,
-                    fontWeight: mask.fontWeight + (mask.css ? ';' + mask.css : ''),
-                    before: {
+                    textDecoration  : mask.text ? 'none; font-size: 0' : 'none',
+                    backgroundColor : mask.backgroundColor,
+                    border          : mask.border,
+                    borderColor     : mask.borderColor,
+                    color           : mask.color,
+                    fontStyle       : mask.fontStyle,
+                    fontWeight      : mask.fontWeight + (mask.css ? ';' + mask.css : ''),
+                    before          : {
                         // Render the mask text if provided
-                        contentText: typeof mask.text === 'string' ? mask.text : undefined,
-                        backgroundColor: mask.backgroundColor,
-                        border: mask.border,
-                        borderColor: mask.borderColor,
-                        color: mask.color,
-                        fontStyle: mask.fontStyle,
-                        fontWeight: mask.fontWeight + (mask.css ? ';' + mask.css : ''),
+                        contentText     : typeof mask.text === 'string' ? mask.text : undefined,
+                        backgroundColor : mask.backgroundColor,
+                        border          : mask.border,
+                        borderColor     : mask.borderColor,
+                        color           : mask.color,
+                        fontStyle       : mask.fontStyle,
+                        fontWeight      : mask.fontWeight + (mask.css ? ';' + mask.css : ''),
                     },
                 }),
             );
@@ -219,19 +219,19 @@ export default class MaskController {
                 let hover = mask.hover;
 
                 if (matchReplace?.text) {
-                    decorationKey += `${DECOR_KEY_PREFIX}${matchReplace.text}`;
+                    decorationKey += `${DECOR_KEY_SUFFIX}${matchReplace.text}`;
 
                     if (!matchReplaceKeys.has(decorationKey)) {
                         matchReplaceKeys.add(decorationKey);
                         this.initialize(decorationKey, {
-                            text: matchReplace.text,
-                            backgroundColor: matchReplace.backgroundColor,
-                            border: matchReplace.border,
-                            borderColor: matchReplace.borderColor,
-                            color: matchReplace.color,
-                            fontStyle: matchReplace.fontStyle,
-                            fontWeight: matchReplace.fontWeight,
-                            css: matchReplace.css,
+                            text            : matchReplace.text,
+                            backgroundColor : matchReplace.backgroundColor,
+                            border          : matchReplace.border,
+                            borderColor     : matchReplace.borderColor,
+                            color           : matchReplace.color,
+                            fontStyle       : matchReplace.fontStyle,
+                            fontWeight      : matchReplace.fontWeight,
+                            css             : matchReplace.css,
                         });
                     }
 
@@ -243,9 +243,25 @@ export default class MaskController {
                 }
 
                 decorationOptions.get(decorationKey)?.push({
-                    range: new vscode.Range(startPos, endPos),
-                    hoverMessage: hover,
+                    range        : new vscode.Range(startPos, endPos),
+                    hoverMessage : hover,
                 });
+            } else {
+                // clear cursor intersected mask
+                for (const key of this.decorationTypeMap.keys()) {
+                    const cleanKey = key.replace(new RegExp(`${DECOR_KEY_SUFFIX}.*`), '');
+                    const currentLineText = !matchReplaceKeys.has(key);
+
+                    if (key.includes(DECOR_KEY_SUFFIX) && cleanKey === pattern.source && currentLineText) {
+                        const decorationType = this.decorationTypeMap.get(key);
+
+                        if (decorationType) {
+                            editor.setDecorations(decorationType, []);
+                        }
+
+                        this.decorationTypeMap.delete(key);
+                    }
+                }
             }
         }
 
@@ -261,20 +277,6 @@ export default class MaskController {
 
         if (decorationType) {
             editor.setDecorations(decorationType, decorationOptions.get(pattern.source) || []);
-        }
-
-        // Clear all masks which were not matched but which are
-        // still cached
-        for (const key of this.decorationTypeMap.keys()) {
-            if (key.includes(DECOR_KEY_PREFIX) && key !== pattern.source && !(matchReplaceKeys.has(key))) {
-                const decorationType = this.decorationTypeMap.get(key);
-
-                if (decorationType) {
-                    editor.setDecorations(decorationType, []);
-                }
-
-                this.decorationTypeMap.delete(key);
-            }
         }
     }
 }

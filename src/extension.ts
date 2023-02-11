@@ -68,15 +68,15 @@ const maskEditor = debounce((editor: vscode.TextEditor | undefined) => {
                         const regex = new RegExp(item.pattern, item.ignoreCase ? 'ig' : 'g');
 
                         maskController.apply(regex, {
-                            text: item.replace,
-                            hover: item.hover,
-                            backgroundColor: item.style?.backgroundColor,
-                            border: item.style?.border,
-                            borderColor: item.style?.borderColor,
-                            color: item.style?.color,
-                            fontStyle: item.style?.fontStyle,
-                            fontWeight: item.style?.fontWeight,
-                            css: item.style?.css,
+                            text            : item.replace,
+                            hover           : item.hover,
+                            backgroundColor : item.style?.backgroundColor,
+                            border          : item.style?.border,
+                            borderColor     : item.style?.borderColor,
+                            color           : item.style?.color,
+                            fontStyle       : item.style?.fontStyle,
+                            fontWeight      : item.style?.fontWeight,
+                            css             : item.style?.css,
                         });
                     }
                 }
@@ -90,7 +90,7 @@ const maskEditor = debounce((editor: vscode.TextEditor | undefined) => {
             // console.error(err);
         }
     }
-}, 50)
+}, 50);
 
 function clearMasks() {
     MaskControllers.map((controller: MaskController) => controller.clear());
