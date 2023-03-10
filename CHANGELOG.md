@@ -20,3 +20,7 @@
 ## 0.0.9
 
 - fix not applying multiple patterns for the same language
+
+## 0.1.0
+
+- clear the styling on save to avoid old mask remaining visible

@@ -18,7 +18,12 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.window.onDidChangeVisibleTextEditors((editors) => init()),
-        vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => maskEditor(vscode.window.activeTextEditor)),
+        vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+            const editor = activeEditor();
+
+            MaskControllers.find((item: MaskController) => item.getEditor() === editor)?.clear();
+            maskEditor(editor);
+        }),
         vscode.window.onDidChangeTextEditorSelection((event: vscode.TextEditorSelectionChangeEvent) => maskEditor(event.textEditor)),
         vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
             if (event.affectsConfiguration(PACKAGE_NAME)) {
@@ -40,6 +45,10 @@ export function activate(context: vscode.ExtensionContext) {
             clearMasks();
         },
     };
+}
+
+function activeEditor(): vscode.TextEditor | undefined {
+    return vscode.window.activeTextEditor;
 }
 
 function setConfig() {
@@ -85,7 +94,6 @@ const maskEditor = debounce((editor: vscode.TextEditor | undefined) => {
             if (!old) {
                 MaskControllers.push(maskController);
             }
-
         } catch (err) {
             // console.error(err);
         }
