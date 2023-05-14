@@ -1,4 +1,4 @@
-import debounce from 'lodash.debounce';
+import pDebounce from 'p-debounce';
 import * as vscode from 'vscode';
 import MaskController from './mask-controller';
 
@@ -14,17 +14,16 @@ interface MaskConfigObject { // define the object (singular)
 
 export function activate(context: vscode.ExtensionContext) {
     setConfig();
-    init();
 
     context.subscriptions.push(
         vscode.window.onDidChangeVisibleTextEditors((editors) => init()),
-        vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+        vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
             const editor = activeEditor();
 
             MaskControllers.find((item: MaskController) => item.getEditor() === editor)?.clear();
-            maskEditor(editor);
+            await maskEditor(editor);
         }),
-        vscode.window.onDidChangeTextEditorSelection((event: vscode.TextEditorSelectionChangeEvent) => maskEditor(event.textEditor)),
+        vscode.window.onDidChangeTextEditorSelection(pDebounce(async (event: vscode.TextEditorSelectionChangeEvent) => await maskEditor(event.textEditor), 100)),
         vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
             if (event.affectsConfiguration(PACKAGE_NAME)) {
                 clearMasks();
@@ -58,11 +57,15 @@ function setConfig() {
 }
 
 function init() {
-    vscode.window.visibleTextEditors.map((editor) => maskEditor(editor));
+    vscode.window.visibleTextEditors.map(async (editor) => await maskEditor(editor));
 }
 
-const maskEditor = debounce((editor: vscode.TextEditor | undefined) => {
-    if (editor) {
+function maskEditor(editor: vscode.TextEditor | undefined) {
+    return new Promise((resolve, reject) => {
+        if (!editor) {
+            reject(false);
+        }
+
         const old: MaskController | undefined = MaskControllers.find((item: MaskController) => item.getEditor() === editor);
 
         // A map from language id => mask
@@ -94,11 +97,13 @@ const maskEditor = debounce((editor: vscode.TextEditor | undefined) => {
             if (!old) {
                 MaskControllers.push(maskController);
             }
+
+            setTimeout(resolve, 50);
         } catch (err) {
             // console.error(err);
         }
-    }
-}, 50);
+    });
+}
 
 function clearMasks() {
     MaskControllers.map((controller: MaskController) => controller.clear());
