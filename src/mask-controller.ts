@@ -112,14 +112,8 @@ export default class MaskController {
                 id,
                 vscode.window.createTextEditorDecorationType({
                     // Hide the actual character
-                    textDecoration  : mask.text ? 'none; font-size: 0' : 'none',
-                    backgroundColor : mask.backgroundColor,
-                    border          : mask.border,
-                    borderColor     : mask.borderColor,
-                    color           : mask.color,
-                    fontStyle       : mask.fontStyle,
-                    fontWeight      : mask.fontWeight + (mask.css ? ';' + mask.css : ''),
-                    before          : {
+                    textDecoration : mask.text ? 'none;font-size:0;line-height:1' : 'none',
+                    before         : {
                         // Render the mask text if provided
                         contentText     : typeof mask.text === 'string' ? mask.text : undefined,
                         backgroundColor : mask.backgroundColor,
@@ -127,7 +121,7 @@ export default class MaskController {
                         borderColor     : mask.borderColor,
                         color           : mask.color,
                         fontStyle       : mask.fontStyle,
-                        fontWeight      : mask.fontWeight + (mask.css ? ';' + mask.css : ''),
+                        fontWeight      : mask.fontWeight + (mask.css ? `;${mask.css}` : ''),
                     },
                 }),
             );

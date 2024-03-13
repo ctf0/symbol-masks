@@ -24,3 +24,7 @@
 ## 0.1.0
 
 - clear the styling on save to avoid old mask remaining visible
+
+## 0.1.2
+
+- fix shifted up text + cleanup
