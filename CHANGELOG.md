@@ -28,3 +28,7 @@
 ## 0.1.2
 
 - fix shifted up text + cleanup
+
+## 0.1.3
+
+- add new command to toggle masks globally `Symbol Masks: Toggle Masks`

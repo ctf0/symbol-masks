@@ -5,7 +5,8 @@ import MaskController from './mask-controller';
 const PACKAGE_NAME = 'symbolMasks';
 let userMasks: any = [];
 let extraMasks: any = [];
-const MaskControllers: any = [];
+let MaskControllers: any = [];
+let toggledOff = false
 
 interface MaskConfigObject { // define the object (singular)
     language: string;
@@ -16,12 +17,24 @@ export function activate(context: vscode.ExtensionContext) {
     setConfig();
 
     context.subscriptions.push(
+        vscode.commands.registerCommand('symbolMasks.toggleMasks', () => {
+            if (toggledOff == false) {
+                toggledOff = true
+                return clearMasks();
+            }
+
+            toggledOff = false
+            setConfig();
+            init();
+        }),
         vscode.window.onDidChangeVisibleTextEditors((editors) => init()),
         vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
             const editor = activeEditor();
 
-            MaskControllers.find((item: MaskController) => item.getEditor() === editor)?.clear();
-            await maskEditor(editor);
+            if (document === editor?.document) {
+                MaskControllers.find((item: MaskController) => item.getEditor() === editor)?.clear();
+                await maskEditor(editor);
+            }
         }),
         vscode.window.onDidChangeTextEditorSelection(pDebounce(async (event: vscode.TextEditorSelectionChangeEvent) => await maskEditor(event.textEditor), 100)),
         vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
@@ -62,8 +75,8 @@ function init() {
 
 function maskEditor(editor: vscode.TextEditor | undefined) {
     return new Promise((resolve, reject) => {
-        if (!editor) {
-            reject(false);
+        if (!editor || toggledOff == true) {
+            return reject(false);
         }
 
         const old: MaskController | undefined = MaskControllers.find((item: MaskController) => item.getEditor() === editor);
@@ -80,15 +93,15 @@ function maskEditor(editor: vscode.TextEditor | undefined) {
                         const regex = new RegExp(item.pattern, item.ignoreCase ? 'ig' : 'g');
 
                         maskController.apply(regex, {
-                            text            : item.replace,
-                            hover           : item.hover,
-                            backgroundColor : item.style?.backgroundColor,
-                            border          : item.style?.border,
-                            borderColor     : item.style?.borderColor,
-                            color           : item.style?.color,
-                            fontStyle       : item.style?.fontStyle,
-                            fontWeight      : item.style?.fontWeight,
-                            css             : item.style?.css,
+                            text: item.replace,
+                            hover: item.hover,
+                            backgroundColor: item.style?.backgroundColor,
+                            border: item.style?.border,
+                            borderColor: item.style?.borderColor,
+                            color: item.style?.color,
+                            fontStyle: item.style?.fontStyle,
+                            fontWeight: item.style?.fontWeight,
+                            css: item.style?.css,
                         });
                     }
                 }
@@ -107,6 +120,7 @@ function maskEditor(editor: vscode.TextEditor | undefined) {
 
 function clearMasks() {
     MaskControllers.map((controller: MaskController) => controller.clear());
+    MaskControllers = []
 }
 
 export function deactivate() { }
